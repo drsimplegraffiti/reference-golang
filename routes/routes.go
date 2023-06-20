@@ -20,5 +20,7 @@ func InitializeRoutes(router *gin.Engine) {
 	{
 		protectedRoutes.GET("/bookings", controllers.GetAllBookings)
 		protectedRoutes.POST("/bookings", controllers.CreateBooking)
+		protectedRoutes.GET("/profile", controllers.GetCurrentUser)
+		protectedRoutes.PUT("/profile", controllers.UpdateUser)
 	}
 }

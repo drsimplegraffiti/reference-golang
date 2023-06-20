@@ -13,7 +13,13 @@ func CreateBooking(c *gin.Context) {
 	var booking models.Booking
 
 	if err := c.ShouldBindJSON(&booking); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error() + ` Fields are empty`})
+		return
+	}
+
+	// check if body is empty or not
+	if booking.Description == ""  {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Fields are empty"})
 		return
 	}
 

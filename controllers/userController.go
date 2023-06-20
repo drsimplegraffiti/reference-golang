@@ -86,3 +86,48 @@ func Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
+
+
+func GetCurrentUser(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	var user models.User
+	initializers.DB.Where("id = ?", userID).First(&user)
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+func UpdateUser(c *gin.Context) {
+	var body struct{
+		FirstName string
+		LastName string
+		Age int
+	}
+	if c.Bind(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Fields are empty"})
+		return
+	}
+
+	// check if the body parameters are empty
+	if body.FirstName == "" || body.LastName == "" || body.Age == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Fields are empty"})
+		return
+	}
+
+	userID := c.MustGet("userID").(uint)
+	var user models.User
+	initializers.DB.Where("id = ?", userID).First(&user)
+
+	//check if user exists
+	if user.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	//update user
+	user.FirstName = body.FirstName
+	user.LastName = body.LastName
+	user.Age = body.Age
+	initializers.DB.Save(&user)
+
+	c.JSON(http.StatusOK, gin.H{"user": user})
+
+}
