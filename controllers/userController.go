@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/drsimplegraffiti/ref/initializers"
 	"github.com/drsimplegraffiti/ref/models"
@@ -96,38 +99,49 @@ func GetCurrentUser(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
-	var body struct{
-		FirstName string
-		LastName string
-		Age int
-	}
-	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Fields are empty"})
-		return
-	}
-
-	// check if the body parameters are empty
-	if body.FirstName == "" || body.LastName == "" || body.Age == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Fields are empty"})
-		return
-	}
-
 	userID := c.MustGet("userID").(uint)
 	var user models.User
-	initializers.DB.Where("id = ?", userID).First(&user)
-
-	//check if user exists
-	if user.ID == 0 {
+	if err := initializers.DB.First(&user, userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
-	//update user
-	user.FirstName = body.FirstName
-	user.LastName = body.LastName
-	user.Age = body.Age
-	initializers.DB.Save(&user)
+	// Parse form data
+	firstName := c.PostForm("firstName")
+	lastName := c.PostForm("lastName")
+	ageStr := c.PostForm("age")
+	age, err := strconv.Atoi(ageStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid age"})
+		return
+	}
+
+	// Upload image
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error uploading image"})
+		return
+	}
+
+	// Generate random file name
+	fileName := fmt.Sprintf("%d%s", time.Now().Unix(), file.Filename)
+
+	// Upload file to the server
+	if err := c.SaveUploadedFile(file, "./uploads/"+fileName); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error uploading image"})
+		return
+	}
+
+	// Update user fields
+	user.FirstName = firstName
+	user.LastName = lastName
+	user.Age = age
+	user.ProfilePic = fileName
+
+	if err := initializers.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"user": user})
-
 }
