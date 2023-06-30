@@ -1,0 +1,21 @@
+# .air.toml
+
+root = "."
+tmp_dir = "tmp"
+exclude_dir = ["tmp", "vendor"]
+include_ext = [".go"]
+build_args = ["-tags", "development"]
+debug = true
+notify_delay = 5
+
+[build]
+  bin = "./tmp/main.exe"
+  cmd = "go build -o ./tmp/main.exe ."
+  delay = 1000
+  exclude_dir = ["tmp", "vendor"]
+
+[[event]]
+  delay = 1000
+  path = "**/*.go"
+  exclude_paths = []
+  command = "go run ."

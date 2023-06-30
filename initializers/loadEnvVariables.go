@@ -9,7 +9,7 @@ import (
 
 func LoadEnvVariables(){
     err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
+    if err != nil { // error must return nil
+        log.Fatal("Error loading .env file" + err.Error())
     }
 }
